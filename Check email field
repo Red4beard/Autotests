@@ -1,0 +1,38 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from emails_list import emails
+
+
+service = Service("../drivers/chromedriver")
+driver = webdriver.Chrome(service=service)
+url_web_form = "https://###########/app/#/auth/login?redirect=%2Fdatabase" #there is NDA path to the app
+
+driver.get(url_web_form)
+elem = driver.find_element(By.TAG_NAME, "iframe")
+iframe_url = elem.get_attribute('src')
+driver.get(iframe_url)
+
+
+for each_email in emails:
+    email_field = driver.find_element(By.CSS_SELECTOR, 'input[class*=PgAuth-Field-field__input]')
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'input[class*=PgAuth-Field-field__input]')))
+    email_field.send_keys(each_email)
+    button_continue = driver.find_element(By.CSS_SELECTOR, 'button[class*=PgAuth-Sign-form__btn')
+    WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[class*=PgAuth-Field-field__input]')))
+    button_continue.click()
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, '.PgAuth-Error')))
+    check = driver.find_element(By.CSS_SELECTOR, '.PgAuth-Error')
+    # print(check.text)
+    if "This email address is already registered" in check.text:
+        print(f"This email {each_email} is registred already and user has a profile")
+    elif "Please enter the correct email address" in check.text:
+        print(f"This email {each_email} is incorrect")
+    else:
+        print("Not found")
+
+driver.quit()
